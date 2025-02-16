@@ -1,0 +1,1 @@
+{"statusCode": 200, "body": "{\"message\": \"Cost alert sent successfully\", \"data\": {\"current_month_cost\": \"76.4836685664\", \"daily_cost\": \"3.6629969096\", \"daily_average\": \"4.78\", \"forecast_cost\": \"133.85\", \"aws_forecast\": \"107.9459943058923\", \"days_in_month\": 28, \"days_so_far\": 16, \"daily_run_rate\": \"4.78\"}}"}

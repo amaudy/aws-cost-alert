@@ -1,83 +1,157 @@
 # AWS Cost Alert System
 
-This system provides daily AWS cost alerts via email using AWS Lambda and SNS.
-
+A serverless AWS cost monitoring system that sends daily cost alerts and forecasts via email.
 
 ## Features
-- Daily AWS cost monitoring
-- Cost forecast for the next 30 days
-- Email notifications via SNS
-- Serverless deployment using AWS Lambda
+
+- 📊 Daily AWS cost monitoring
+- 📈 Cost trend analysis and forecasting
+- 📧 Email notifications via SNS
+- ⚡ Serverless architecture using AWS Lambda
+- 🔄 Daily automated runs (20:00 Bangkok time)
+- 🛠 Infrastructure as Code using Terraform
+
+## Architecture
+
+```
+┌─────────────┐    ┌──────────┐    ┌─────────┐    ┌──────────┐
+│ CloudWatch  │───>│  Lambda  │───>│   SNS   │───>│  Email   │
+│  Events     │    │ Function │    │  Topic  │    │ Inbox    │
+└─────────────┘    └──────────┘    └─────────┘    └──────────┘
+                         │
+                         v
+                   ┌──────────┐
+                   │   Cost   │
+                   │ Explorer │
+                   └──────────┘
+```
 
 ## Prerequisites
-1. AWS Account with appropriate permissions
-2. AWS CLI configured locally
-3. Python 3.8 or higher
 
-## Required AWS Services
-- AWS Lambda
-- AWS SNS
-- AWS Cost Explorer
-- AWS CloudWatch Events (for scheduling)
+- AWS CLI configured with appropriate permissions
+- Terraform >= 1.0
+- Python 3.9+
+- AWS account with permissions for:
+  - Lambda
+  - CloudWatch Events
+  - SNS
+  - Cost Explorer
+  - IAM
 
-## Setup Instructions
+## Project Structure
 
-1. Create a virtual environment and install dependencies:
-```bash
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-pip install -r requirements.txt
+```
+aws-cost-alert/
+├── README.md               # Project documentation
+├── terraform/             # Infrastructure as Code
+│   ├── main.tf           # Main Terraform configuration
+│   ├── variables.tf      # Input variables
+│   ├── terraform.tfvars  # Variable values
+│   └── modules/
+│       └── lambda-cost-alert/
+│           ├── main.tf   # Lambda module configuration
+│           ├── variables.tf
+│           ├── outputs.tf
+│           └── src/      # Lambda function source code
+│               ├── lambda_function.py
+│               ├── requirements.txt
+│               └── README.md  # Technical documentation
 ```
 
-2. Run tests:
-```bash
-python -m pytest test_lambda_function.py -v
-```
+## Quick Start
 
-3. Create an SNS Topic:
-```bash
-aws sns create-topic --name aws-cost-alert
-```
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/yourusername/aws-cost-alert.git
+   cd aws-cost-alert
+   ```
 
-4. Subscribe your email to the SNS topic:
-```bash
-aws sns subscribe --topic-arn <YOUR_TOPIC_ARN> --protocol email --notification-endpoint your.email@example.com
-```
+2. Update Terraform variables:
+   ```bash
+   cd terraform
+   cp terraform.tfvars.example terraform.tfvars
+   # Edit terraform.tfvars with your email
+   ```
 
-5. Create a Lambda function:
-   - Create a new Lambda function using Python 3.8+ runtime
-   - Upload the contents of this directory as a ZIP file
-   - Set the environment variable `SNS_TOPIC_ARN` to your SNS topic ARN
+3. Deploy the infrastructure:
+   ```bash
+   terraform init
+   terraform apply
+   ```
 
-6. Set up IAM permissions for the Lambda function:
-   - AWSLambdaBasicExecutionRole
-   - Allow ce:GetCostAndUsage
-   - Allow ce:GetCostForecast
-   - Allow sns:Publish
+4. Confirm your email subscription when you receive the AWS notification.
 
-7. Create a CloudWatch Events rule to trigger the Lambda function daily:
-```bash
-aws events put-rule --name DailyCostAlert --schedule-expression "rate(1 day)"
-```
+## Deployment Methods
 
-8. Add permission for CloudWatch Events to trigger the Lambda function:
-```bash
-aws lambda add-permission --function-name aws-cost-alert \
-  --statement-id CloudWatchEvents \
-  --action lambda:InvokeFunction \
-  --principal events.amazonaws.com \
-  --source-arn <YOUR_CLOUDWATCH_RULE_ARN>
-```
+### 1. Using Terraform (Recommended)
 
-## Cost Considerations
-- AWS Lambda: Free tier includes 1M requests per month
-- AWS SNS: Free tier includes 1M publishes per month
-- AWS Cost Explorer: $0.01 per API request (no free tier)
-- Total estimated cost: Less than $1/month for daily alerts
+The Terraform deployment:
+- Creates all required AWS resources
+- Sets up proper IAM roles and permissions
+- Configures CloudWatch scheduling
+- Manages Lambda deployment package
+- Sets up SNS notifications
+
+See [terraform/README.md](terraform/README.md) for detailed Terraform configuration.
+
+### 2. Manual Deployment
+
+You can also deploy manually using the AWS Console or CLI:
+
+1. Create virtual environment:
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   pip install -r terraform/modules/lambda-cost-alert/src/requirements.txt
+   ```
+
+2. Create AWS resources:
+   ```bash
+   # Create SNS Topic
+   aws sns create-topic --name aws-cost-alert
+
+   # Create Lambda function (see deploy.sh for full script)
+   aws lambda create-function ...
+   ```
+
+See [src/README.md](terraform/modules/lambda-cost-alert/src/README.md) for technical details.
+
+## Cost Analysis
+
+### AWS Service Costs
+- Lambda: Free tier includes 1M requests/month
+- SNS: Free tier includes 1M publishes/month
+- Cost Explorer: $0.01 per API request
+- CloudWatch: Free tier includes 10 metrics/month
+
+### Estimated Monthly Cost
+- Total: < $1/month for daily alerts
+- Main cost factor: Cost Explorer API calls
 
 ## Customization
-You can modify the `lambda_function.py` to:
-- Change the monitoring period
-- Add more metrics
-- Customize the email format
-- Add cost thresholds and alerts
+
+The system can be customized by:
+1. Modifying the Lambda function code
+2. Adjusting the CloudWatch schedule
+3. Changing the cost calculation logic
+4. Customizing email templates
+
+See technical documentation for details.
+
+## Contributing
+
+1. Fork the repository
+2. Create your feature branch
+3. Make your changes
+4. Run tests: `cd terraform/modules/lambda-cost-alert/src && python -m pytest`
+5. Submit a Pull Request
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Acknowledgments
+
+- AWS Cost Explorer API
+- Terraform AWS Provider
+- Python Boto3 SDK
